@@ -1,0 +1,113 @@
+﻿signal
+
+目录
+
+    函数名: signal
+    注意点
+
+编辑本段函数名: signal
+　　表头文件 #include<signal.h>
+　　功 能： 设置某一信号的对应动作
+　　函数原型 ：void (*signal(int signum,void(* handler)(int)))(int);
+　　或者：typedef void(*sig_t) ( int );
+　　sig_t signal(int signum,sig_t handler);
+　　参数说明：
+　　第一个参数signum指明了所要处理的信号类型，它可以取除了SIGKILL和SIGSTOP外的任何一种信号。
+　　第二个参数handler描述了与信号关联的动作，它可以取以下三种值：
+　　（1）一个无返回值的函数地址
+　　此函数必须在signal()被调用前申明，handler中为这个函数的名字。当接收到一个类型为sig的信号时，就执行handler 所指定的函数。这个函数应有如下形式的定义：
+　　void func(int sig);
+　　sig是传递给它的唯一参数。执行了signal()调用后，进程只要接收到类型为sig的信号，不管其正在执行程序的哪一部分，就立即执行func()函数。当func()函数执行结束后，控制权返回进程被中断的那一点继续执行。
+　　（2）SIG_IGN
+　　这个符号表示忽略该信号，执行了相应的signal()调用后，进程会忽略类型为sig的信号。
+　　（3）SIGDFL
+　　这个符号表示恢复系统对信号的默认处理。
+　　函数说明 ：
+　　signal()会依参数signum 指定的信号编号来设置该信号的处理函数。当指定的信号到达时就会跳转到参数handler指定的函数执行。当一个信号的信号处理函数执行时，如果进程又接收到了该信号，该信号会自动被储存而不会中断信号处理函数的执行，直到信号处理函数执行完毕再重新调用相应的处理函数。但是如果在信号处理函数执行时进程收到了其它类型的信号，该函数的执行就会被中断。
+　　返回值： 返回先前的信号处理函数指针，如果有错误则返回SIG_ERR(-1)。
+　　附加说明 ：在信号发生跳转到自定的handler处理函数执行后，系统会自动将此处理函数换回原来系统预设的处理方式，如果要改变此操作请改用sigaction()。
+　　下面的情况可以产生Signal：
+　　1. 按下CTRL+C产生SIGINT
+　　2. 硬件中断，如除0，非法内存访问（SIGSEV）等等
+　　3. Kill函数可以对进程发送Signal
+　　4. Kill命令。实际上是对Kill函数的一个包装
+　　5. 软件中断。如当Alarm Clock超时（SIGURG），当Reader中止之后又向管道写数据（SIGPIPE），等等
+　　程序例:
+　　/* This example installs a signal handler routine for SIGFPE,
+　　catches an integer overflow condition, makes an adjustment
+　　to AX register, and returns. This example program MAY cause
+　　your computer to crash, and will produce runtime errors
+　　depending on which memory model is used.
+　　*/
+　　#pragma inline
+　　#include <stdio.h>
+　　#include <signal.h>
+　　void Catcher(int sig, int type, int *reglist)
+　　{
+　　printf("Caught it!\n");
+　　*(reglist + 8) = 3; /* make return AX = 3 */
+　　}
+　　int main(void)
+　　{
+　　signal(SIGFPE, Catcher);
+　　asm mov ax,07FFFH /* AX = 32767 */
+　　asm inc ax /* cause overflow */
+　　asm into /* activate handler */
+　　/* The handler set AX to 3 on return. If that hadn't happened,
+　　there would have been another exception when the next 'into'
+　　was executed after the 'dec' instruction. */
+　　asm dec ax /* no overflow now */
+　　asm into /* doesn't activate */
+　　return 0;
+　　}
+　　2 Signals:
+　　
+Signal	Description
+SIGABRT	由调用abort函数产生，进程非正常退出
+SIGALRM	用alarm函数设置的timer超时或setitimer函数设置的interval timer超时
+SIGBUS	某种特定的硬件异常，通常由内存访问引起
+SIGCANCEL	由Solaris Thread Library内部使用，通常不会使用
+SIGCHLD	进程Terminate或Stop的时候，SIGCHLD会发送给它的父进程。缺省情况下该Signal会被忽略
+SIGCONT	当被stop的进程恢复运行的时候，自动发送
+SIGEMT	和实现相关的硬件异常
+SIGFPE	数学相关的异常，如被0除，浮点溢出，等等
+SIGFREEZE	Solaris专用，Hiberate或者Suspended时候发送
+SIGHUP	发送给具有Terminal的Controlling Process，当terminal被disconnect时候发送
+SIGILL	非法指令异常
+SIGINFO	BSD signal。由Status Key产生，通常是CTRL+T。发送给所有Foreground Group的进程
+SIGINT	由Interrupt Key产生，通常是CTRL+C或者DELETE。发送给所有ForeGround Group的进程
+SIGIO	异步IO事件
+SIGIOT	实现相关的硬件异常，一般对应SIGABRT
+SIGKILL	无法处理和忽略。中止某个进程
+SIGLWP	由Solaris Thread Libray内部使用
+SIGPIPE	在reader中止之后写Pipe的时候发送
+SIGPOLL	当某个事件发送给Pollable Device的时候发送
+SIGPROF	Setitimer指定的Profiling Interval Timer所产生
+SIGPWR	和系统相关。和UPS相关。
+SIGQUIT	输入Quit Key的时候（CTRL+\）发送给所有Foreground Group的进程
+SIGSEGV	非法内存访问
+SIGSTKFLT	Linux专用，数学协处理器的栈异常
+SIGSTOP	中止进程。无法处理和忽略。
+SIGSYS	非法系统调用
+SIGTERM	请求中止进程，kill命令缺省发送
+SIGTHAW	Solaris专用，从Suspend恢复时候发送
+SIGTRAP	实现相关的硬件异常。一般是调试异常
+SIGTSTP	Suspend Key，一般是Ctrl+Z。发送给所有Foreground Group的进程
+SIGTTIN	当Background Group的进程尝试读取Terminal的时候发送
+SIGTTOU	当Background Group的进程尝试写Terminal的时候发送
+SIGURG	当out-of-band data接收的时候可能发送
+SIGUSR1	用户自定义signal 1
+SIGUSR2	用户自定义signal 2
+SIGVTALRM	setitimer函数设置的Virtual Interval Timer超时的时候
+SIGWAITING	Solaris Thread Library内部实现专用
+SIGWINCH	当Terminal的窗口大小改变的时候，发送给Foreground Group的所有进程
+SIGXCPU	当CPU时间限制超时的时候
+SIGXFSZ	进程超过文件大小限制
+SIGXRES	Solaris专用，进程超过资源限制的时候发送
+编辑本段注意点
+　　1、不要使用低级的或者STDIO.H的IO函数
+　　2、不要使用对操作
+　　3、不要进行系统调用
+　　4、不是浮点信号的时候不要用longjmp
+　　5、singal函数是由ISO C定义的。因为ISO C不涉及多进程，进程组以及终端I/O等，所以他对信号的定义非常含糊，以至于对UNIX系统而言几乎毫无用处。
+　　备注：因为singal的语义与现实有关，所以最好使用sigaction函数替代本函数。

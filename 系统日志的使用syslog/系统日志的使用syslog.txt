@@ -1,0 +1,67 @@
+﻿openlog
+
+编辑本段用途：
+　　用于打开系统记录。
+编辑本段函数头文件：
+　　#include<syslog.h>
+编辑本段函数原型：
+　　void openlog(const char *ident, int option, int facility);
+(日志进程syslogd的配置文件是/etc/syslog.conf。默认日志文件存放在/var/log目录
+linux提供了一种日志转储功能，这个功能是由logrotate命令实现的。
+/var/log 中的wtmp和lastlog以及/var/run目录中的utmp保存了用户登录信息，关机、重启等
+日志分析工具Logcheck和swatch)
+编辑本段描述：
+　　openlog（）打开一个程序的系统记录器的连接。本函数呼叫 UNIX 系统的 openlog() 函数，因此在 Windows 系列的操作系统中，本函数没有完全的实作。
+　　1.idents指向的字符串可以是想要打出的任意字符，它所表示的字符串将固定地加在每行日志的前面以标识这个日志，该标志通常设置为程序的名称。
+　　2.option参数所指定的标志用来控制openlog()操作和syslog（）的后续调用。他的值为具体是下列值取与运算的结果
+　　LOG_CONS
+　　直接写入系统控制台，如果有一个错误，同时发送到系统日志记录。	
+　　LOG_NDELAY
+　　立即打开连接（通常，打开连接时记录的第一条消息）。
+　　LOG_NOWAIT
+　　不要等待子进程，因为其有可能在记录消息的时候就被创建了（GNU C库不创建子进程，所以该选项在Linux上没有影响。）
+　　LOG_ODELAY
+　　延迟连接的打开直到syslog函数调用。（这是默认情况下，需要没被指定的情况下。）
+　　LOG_PERROR
+　　（不在SUSv3情况下）同时输出到stderr（标准错误文件）。
+　　LOG_PID
+　　包括每个消息的PID。
+　　3.facility参数是用来指定记录消息程序的类型。它让指定的配置文件，将以不同的方式来处理来自不同方式的消息。它的值可能为 LOG_KERN、LOG_USER、LOG_MAIL、LOG_DAEMON、LOG_AUTH、LOG_SYSLOG、LOG_LPR、LOG_NEWS、LOG_UUCP、LOG_CRON 或 LOG_AUTHPRIV
+　　各个值的具体意义我们可以参照man openlog 手册。
+　　LOG_AUTH
+　　security/authorization messages (DEPRECATED Use LOG_AUTHPRIV
+　　instead)
+　　LOG_AUTHPRIV
+　　security/authorization messages (private)
+　　LOG_CRON
+　　clock daemon (cron and at)
+　　LOG_DAEMON
+　　system daemons without separate facility value
+　　LOG_FTP
+　　ftp daemon
+　　LOG_KERN
+　　kernel messages
+　　LOG_LOCAL0 through LOG_LOCAL7
+　　reserved for local use
+　　LOG_LPR
+　　line printer subsystem
+　　LOG_MAIL
+　　mail subsystem
+　　LOG_NEWS
+　　USENET news subsystem
+　　LOG_SYSLOG
+　　messages generated internally by syslogd
+　　LOG_USER (default)
+　　generic user-level messages
+　　LOG_UUCP
+　　UUCP subsystem
+　　[1]
+编辑本段示例代码
+　　#include <syslog.h>
+　　int main(int argc, char **argv)
+　　{
+　　openlog("Test", LOG_CONS | LOG_PID, LOG_USER );
+　　syslog(LOG_INFO,"This is a massage just for test");
+　　closelog();
+　　return 0;
+　　}

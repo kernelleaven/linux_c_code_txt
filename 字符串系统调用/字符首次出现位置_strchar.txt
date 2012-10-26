@@ -1,5 +1,5 @@
 ﻿strchr
-
+返回的是一个字符串，首个字母就是要查找的字符。
 编辑本段简介
 　　原型：extern char *strchr(const char *s,char c);
 　　const char *strchr(const char* _Str,int _Val)

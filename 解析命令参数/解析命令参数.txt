@@ -1,0 +1,241 @@
+﻿getopt, getopt_long, getopt_long_only 
+man 3 getopt
+NAME
+       getopt, getopt_long, getopt_long_only - Parse command-line options
+       #include <unistd.h>
+       int getopt(int argc, char * const argv[],
+                  const char *optstring);
+       extern char *optarg;
+       extern int optind, opterr, optopt;
+       #define _GNU_SOURCE
+
+       The  getopt()  function parses the command-line arguments.  Its arguments argc and argv are the argument count and array as
+       passed to the main() function on program invocation.  An element of argv that starts with ’-’ (and is not  exactly  "-"  or
+       "--")  is  an  option  element.   The  characters  of  this element (aside from the initial ’-’) are option characters.  If
+       getopt() is called repeatedly, it returns successively each of the option characters from each of the option elements.
+[cpp] view plaincopy
+
+    #include <unistd.h>    
+    #include <stdlib.h>    
+    #include <stdio.h>    
+      
+    int    
+    main(int argc, char *argv[])    
+    {    
+        int  opt;    
+        char* short_options="nt:";  
+        while ((opt = getopt(argc, argv,short_options)) != -1) {    
+            switch (opt) {    
+            case 'n':    
+               printf("option n\n");    
+               break;    
+            case 't':    
+               printf("option t,optarg=%s\n",optarg);    
+               printf("str to int:%d\n",atoi(optarg));  
+               break;    
+            default:    
+               fprintf(stderr, "Usage: %s [-t nsecs] [-n] name\n",argv[0]);    
+            }    
+        }  
+        exit(EXIT_SUCCESS);    
+    }  
+
+[cpp] view plaincopy
+
+    [root@localhost test]# ./test1 -t 66 -n  
+    option t,optarg=66  
+    str to int:66  
+    option n  
+
+********************************************************************	
+	
+getopt_long支持长选项的命令行解析，使用man getopt_long，得到其声明如下：
+  #include <getopt.h>
+       int getopt_long(int argc, char * const argv[],
+                  const char *optstring,
+                  const struct option *longopts, int *longindex);
+
+       int getopt_long_only(int argc, char * const argv[],
+                  const char *optstring,
+                  const struct option *longopts, int *longindex);
+
+说明：函数中的argc和argv通常直接从main()到两个参数传递而来。optsting是选项参数组成的字符串，如
+果该字符串里任一字母后有冒号，那么这个选项就要求有参数。下一个参数是指向数组的指针，这个数组是
+option结构数组，option结构称为长选项表，其声明如下：
+ struct option {
+              const char *name;
+              int has_arg;
+              int *flag;
+              int val;
+          };
+
+结构中的元素解释如下：
+const char *name：选项名，前面没有短横线。譬如"help"、"verbose"之类。
+int has_arg：描述长选项是否有选项参数，如果有，是哪种类型的参数，其值见下表:
+符号常量             数值            含义
+no_argument            0            选项没有参数
+required_argument      1            选项需要参数
+optional_argument      2            选项参数是可选的
+int *flag：
+如果该指针为NULL，那么getopt_long返回val字段的值；
+如果该指针不为NULL，那么会使得它所指向的结构填入val字段的值，同时getopt_long返回0
+int val：
+如果flag是NULL，那么val通常是个字符常量，如果短选项和长选项一致，那么该字符就应该与optstring中
+出现的这个选项的参数相同；
+最后一个参数：longindex参数一般赋为NULL即可；如果没有设置为NULL，那么它就指向一个变量，这个变量
+会被赋值为寻找到的长选项在longopts中的索引值，这可以用于错误诊断。
+注：GNU提供的getopt-long()和getopt-long-only()函数，其中，后者的长选项字串是以一个短横线开始的
+，而非一对短横线。
+
+linux 命令行约定：
+     几乎所有的GNU/Linux程序都遵循一些命令行参数定义的约定。程序希望出现的参数可以分成两种：选
+项（options or flags）、其他类型的的参数。Options修饰了程序运行的方式，其他类型的参数则提供了输
+入（例如，输入文件的名称）。
+     对于options类型参数可以有两种方式：
+     1）短选项（short options）:顾名思义，就是短小参数。它们通常包含一个连字号和一个字母（大写
+或小写字母）。例如：-s，-h等。
+     2）长选项（long options）：长选项，包含了两个连字号和一些大小写字母组成的单词。例如，--
+size，--help等。
+     *注：一个程序通常会提供包括short options和long options两种参数形式的参数。
+     对于其他类型参数的说明：
+     这种类型的参数，通常跟随在options类型参数之后。例如，ls –s /功能为显示root目录的大小。’/
+’这个参数告诉ls要显示目录的路径。
+
+getopt_long()函数使用规则：
+（1）使用前准备两种数据结构
+    字符指针型变量
+    该数据结构包括了所有要定义的短选项，每一个选项都只用单个字母表示。如果该选项需要参数（如，
+需要文件路径等），则其后跟一个冒号。例如，三个短选项分别为‘-h’‘-o’‘-v’，其中-o需要参数，
+其他两个不需要参数。那么，我们可以将数据结构定义成如下形式：
+const char * const shor_options = “ho:v” ;
+
+    struct option 类型数组
+    该数据结构中的每个元素对应了一个长选项，并且每个元素是由四个域组成。通常情况下，可以按以下
+规则使用。第一个元素，描述长选项的名称；第二个选项，代表该选项是否需要跟着参数，需要参数则为1，
+反之为0；第三个选项，可以赋为NULL；第四个选项，是该长选项对应的短选项名称。另外，数据结构的最后
+一个元素，要求所有域的内容均为0，即{NULL,0,NULL,0}。下面举例说明，还是按照短选项为‘-h’‘-o’
+‘-v’的例子，该数据结构可以定义成如下形式：
+const struct option long_options = {
+{  “help”,      0,   NULL,   ‘h’  },
+{  “output”,    1,   NULL,   ‘o’  },
+{  “verbose”,   0,   NULL,   ‘v’  },
+{  NULL,      0,    NULL,   0  }
+};
+
+（2）调用方法
+     参照（1）准备的两个数据结构，则调用方式可为：
+getopt_long( argc, argv, short_options, long_options, NULL);
+
+（3）几种常见返回值
+    (a)每次调用该函数，它都会分析一个选项，并且返回它的短选项，如果分析完毕，即已经没有选项了，
+则会返回-1。
+    (b)如果getopt_long()在分析选项时，遇到一个没有定义过的选项，则返回值为‘?’，此时，程序员可
+以打印出所定义命令行的使用信息给用户。
+    (c)当处理一个带参数的选项时，全局变量optarg会指向它的参数
+    (d)当函数分析完所有参数时，全局变量optind（into argv）会指向第一个‘非选项’的位置
+实践小例子：
+
+[c-sharp] view plaincopy
+
+    #include <stdio.h>  
+    #include <getopt.h>  
+    char *l_opt_arg;  
+    char* const short_options = "nbl:";  
+    struct option long_options[] = {  
+         { "name",     0,   NULL,    'n'     },  
+         { "bf_name",  0,   NULL,    'b'     },  
+         { "love",     1,   NULL,    'l'     },  
+         {      0,     0,     0,     0},  
+    };  
+    int main(int argc, char *argv[])  
+    {  
+         int c;  
+         while((c = getopt_long (argc, argv, short_options, long_options, NULL)) != -1)  
+         {  
+             switch (c)  
+             {  
+             case 'n':  
+                 printf("My name is XL./n");  
+                 break;  
+             case 'b':  
+                 printf("His name is ST./n");  
+                 break;  
+             case 'l':  
+                 l_opt_arg = optarg;  
+                 printf("Our love is %s!/n", l_opt_arg);  
+                 break;  
+             }  
+         }  
+         return 0;  
+    }  
+
+编译并运行：
+
+[root@localhost liuxltest]# gcc -o getopt getopt.c
+
+[root@localhost liuxltest]# ./getopt -n -b -l forever
+My name is XL.
+His name is ST.
+Our love is forever!
+[root@localhost liuxltest]#
+
+[root@localhost liuxltest]# ./getopt -nb -l forever
+My name is XL.
+His name is ST.
+Our love is forever!
+[root@localhost liuxltest]# ./getopt -nbl forever 
+My name is XL.
+His name is ST.
+Our love is forever!
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+********************************************************************
+
+getopt_long的原型是int getopt_long(int argc, char * const argv[], 
+        const char *optstring, 
+        const struct option *longopts, 
+        int *longindex); 
+
+
+       The  getopt_long() function works like getopt() except that it also accepts long options, started with two dashes.  (If the
+       program accepts only long options, then optstring should be specified as an empty string  (""),  not  NULL.)   Long  option
+       names  may  be  abbreviated  if the abbreviation is unique or is an exact match for some defined option.  A long option may
+       take a parameter, of the form --arg=param or --arg param.
+
+       longopts is a pointer to the first element of an array of struct option declared in <getopt.h> as
+
+           struct option {
+               const char *name;
+               int         has_arg;
+               int        *flag;
+               int         val;
+           };
+       The meanings of the different fields are:
+
+       name   is the name of the long option.
+
+       has_arg
+              is: no_argument (or 0) if the option does not take an argument; required_argument (or 1) if the option  requires  an
+              argument; or optional_argument (or 2) if the option takes an optional argument.
+
+       flag   specifies  how results are returned for a long option.  If flag is NULL, then getopt_long() returns val.  (For exam-
+              ple, the calling program may set val to the equivalent short option character.)  Otherwise, getopt_long() returns 0,
+              and  flag  points  to a variable which is set to val if the option is found, but left unchanged if the option is not
+              found.
+
+       val    is the value to return, or to load into the variable pointed to by flag.
+
+       The last element of the array has to be filled with zeroes.
+
+       If longindex is not NULL, it points to a variable which is set to the index of the long option relative to longopts.
+
+       getopt_long_only() is like getopt_long(), but ’-’ as well as ’--’ can indicate a long option.  If  an  option  that  starts
+       with ’-’ (not ’--’) doesn’t match a long option, but does match a short option, it is parsed as a short option instead.

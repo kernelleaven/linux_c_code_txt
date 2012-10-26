@@ -1,0 +1,59 @@
+﻿strchr
+
+编辑本段简介
+　　原型：extern char *strchr(const char *s,char c);
+　　const char *strchr(const char* _Str,int _Val)
+　　char *strchr(char* _Str,int _Ch)
+　　头文件：#include <string.h>
+　　功能：查找字符串s中首次出现字符c的位置
+　　说明：返回首次出现c的位置的指针，如果s中不存在c则返回NULL。
+　　返回值：Returns the address of the first occurrence of the character in the string if successful, or NULL otherwise
+编辑本段例子
+　　举例1：（在Visual C++ 6.0中运行通过）
+　　#include <string.h>
+　　#include <stdio.h>
+　　int main(void)
+　　{
+　　char string[17];
+　　char *ptr, c = 'r';
+　　strcpy(string, "This is a string");
+　　ptr = strchr(string, c);
+　　if (ptr)
+　　printf("The character %c is at position: %d\n", c, ptr-string);
+　　else
+　　printf("The character was not found\n");
+　　return 0;
+　　}
+　　运行结果：The character r is at position: 12Press any key to continue
+　　举例2：
+　　// strchr.c
+　　#include <stdio.h>
+　　#include <string.h>
+　　int main()
+　　{
+　　char temp[32];
+　　memset(temp,0,sizeof(temp));
+　　strcpy(temp,"Golden Global View");
+　　char *s = temp;
+　　char *p,c='v';
+　　p=strchr(s,c);
+　　if(p)
+　　printf("%s",p);
+　　else
+　　printf("Not Found!");
+　　return 0;
+　　}
+　　运行结果:Not Found!Press any key to continue
+　　举例3：
+　　#include <stdio.h>
+　　#include <string.h>
+　　void main()
+　　{
+　　char answer[100],*p;
+　　printf("Type something:\n");
+　　fgets(answer,sizeof answer,stdin);
+　　if((p = strchr(answer,'\n')) != NULL)
+　　*p = '\0';
+　　printf("You typed \"%s\"\n",answer);
+　　}
+　　fgets不会像gets那样自动地去掉结尾的\n，所以程序中手动将\n位置处的值变为\0,代表输入的结束。

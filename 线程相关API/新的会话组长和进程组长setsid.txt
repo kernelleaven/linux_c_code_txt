@@ -1,0 +1,20 @@
+﻿setsid
+　　setsid命令
+　　linux常用的命令
+　　setsid命令的一般格式：
+　　setsid();
+　　说明：当进程是会话组长时setsid()调用失败。setsid()调用成功后，进程成为新的会话组长和新的进程组长，并与原来的登录会话和进程组脱离。由于会话过程对控制终端的独占性，进程同时与控制终端脱离。
+　　pid_t pid = fork();
+　　if (pid == 0) {
+　　...
+　　int result = execl(path, "adb", "fork-server", "server", NULL);
+　　} else {
+　　// run a program in a new session
+　　setsid();//之前parent和child运行在同一个session里,而且parent是session头,所以,
+　　//所以作为session头的parent如果exit结束执行的话,那么会话session组中的所有进程将都被杀死,
+　　//所以执行setsid()之后,parent将重新获得一个新的会话session组id,child将仍持有原有的会话session组,
+　　//这时parent退出之后,将不会影响到child了[luther.gliethttp].
+　　}
+　　setsid()的返回值：
+　　成功：调用进程的会话ID；
+　　失败：-1；

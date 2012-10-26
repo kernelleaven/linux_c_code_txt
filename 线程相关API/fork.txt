@@ -1,0 +1,15 @@
+﻿    int fr = 0;
+
+    fr = fork();
+    if(fr < 0) {
+        fprintf(stderr, "fork() failed\n");
+        exit(1);
+    }
+    if(fr > 0) {
+        printf("hellow iam parent my son child id is %d \n",fr)
+    }
+    if(fr == 0){
+        prinf("hellow iam the new thread")
+    }
+////////
+一次fork调用会有两次返回。

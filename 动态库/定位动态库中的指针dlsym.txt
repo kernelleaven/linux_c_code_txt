@@ -1,0 +1,11 @@
+﻿dlsym
+　　
+　　dlsym()的函数原型是
+　　void* dlsym(void* handle,const char* symbol)
+　　该函数在<dlfcn.h>文件中。
+　　handle是由dlopen打开动态链接库后返回的指针，symbol就是要求获取的函数或全局变量的名称，函数返回值是void*,指向函数的地址，供调用使用
+
+void *handle;
+int (*init)(input_parameter *, int id);
+
+init = dlsym(handle, "input_init");//"input_init"动态库中的函数名

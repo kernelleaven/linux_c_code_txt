@@ -1,0 +1,41 @@
+﻿原型
+　　extern char *strcat(char *dest,char *src);
+用法
+　　#include <string.h>
+　　在C++中，则存在于<cstring>头文件中。
+功能
+　　把src所指字符串添加到dest结尾处(覆盖dest结尾处的'\0')并添加'\0'。
+说明
+　　src和dest所指内存区域不可以重叠且dest必须有足够的空间来容纳src的字符串。
+　　返回指向dest的指针。
+举例
+　　// strcat.c
+　　#include <syslib.h>
+　　#include <string.h>
+　　main()
+　　{
+　　char d[20]="Golden Global";
+　　char *s=" View";
+　　clrscr();
+　　strcat(d,s);
+　　printf("%s",d);
+　　getchar();
+　　return 0;
+　　}
+　　程序执行结果为：
+　　Golden Global View
+　　Strcat函数原型如下：
+　　char *strcat(char *strDest, const char *strSrc) //将源字符串加const，表明其为输入参数
+　　{
+　　char *address = strDest; //该语句若放在assert之后，编译出错
+　　assert((strDest != NULL) && (strSrc != NULL)); //对源地址和目的地址加非0断言
+　　while(*strDest) //是while(*strDest!=’\0’)的简化形式
+　　{ //若使用while(*strDest++)，则会出错，因为循环结束后strDest还会执行一次++,那么strDest
+　　strDest++; //将指向'\0'的下一个位置。/所以要在循环体内++；因为要是*strDest最后指
+　　} //向该字符串的结束标志’\0’。
+　　while(*strDest++ = *strSrc++)
+　　{
+　　NULL; //该循环条件内可以用++，
+　　} //此处可以加语句*strDest=’\0’;无必要
+　　return address; //为了实现链式操作，将目的地址返回
+　　}

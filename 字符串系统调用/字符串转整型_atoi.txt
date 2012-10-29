@@ -1,0 +1,46 @@
+﻿atoi
+　　C语言库函数名: atoi
+　　功 能: 把字符串转换成整型数.
+　　名字来源:array to integer 的缩写.
+　　原型: int atoi(const char *nptr);
+　　函数说明: 参数nptr字符串，如果第一个非空格字符不存在或者不是数字也不是正负号则返回零，否则开始做类型转换，之后检测到非数字(包括结束符 \0) 字符时停止转换，返回整型数。
+　　头文件: #include <stdlib.h>
+　　程序例:
+　　1）
+　　#include <stdlib.h>
+　　#include <stdio.h>
+　　int main(void)
+　　{
+　　int n;
+　　char *str = "12345.67";
+　　n = atoi(str);
+　　printf("string = %s integer = %d\n", str, n);
+　　return 0;
+　　}
+　　执行结果
+　　string = 12345.67 integer = 12345
+　　2）
+　　#include <stdlib.h>
+　　#include <stdio.h>
+　　int main()
+　　{
+　　char a[] = "-100" ;
+　　char b[] = "123" ;
+　　int c ;
+　　c = atoi( a ) + atoi( b ) ;
+　　printf("c = %d\n", c) ;
+　　return 0;
+　　}
+　　执行结果
+　　c = 23
+　　简单的实现atoi函数源代码：
+　　#include <cctype>
+　　int my_atoi(const char* p){
+　　assert(p != NULL);
+　　bool neg_flag = false;// 符号标记
+　　int res = 0;// 结果
+　　if(p[0] == '+' || p[0] == '-')
+　　neg_flag = (*p++ != '+');
+　　while(isdigit(*p)) res = res*10 + (*p++ - '0');
+　　return neg_flag ?0 -res : res;
+　　}

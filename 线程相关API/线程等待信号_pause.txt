@@ -1,0 +1,51 @@
+﻿pause
+
+目录
+
+    二、 ORACLE SQL*PLUS 命令：pause
+    展开
+
+    二、 ORACLE SQL*PLUS 命令：pause
+    展开
+
+　　一、 pause()
+　　功能：让进程暂停直到信号出现
+　　相关函数： kill，signal，sleep
+　　表头文件： #include<unistd.h>
+　　定义函数： int pause(void);
+　　函数说明： pause()会令目前的进程暂停（进入睡眠状态），直到被信号(signal)所中断。
+　　返回值： 只返回-1。
+　　错误代码
+　　EINTR 有信号到达中断了此函数。
+　　例子　#include <stdio.h>
+　　#include <stdlib.h>
+　　#include <unistd.h>
+　　int main( void )
+　　{
+　　/* set an alarm to go off in 5 seconds */
+　　alarm( 5 );
+　　/*
+　　* Wait until we receive a SIGALRM signal. However,
+　　* since we don't have a signal handler, any signal
+　　* will kill us.
+　　*/
+　　printf( "Hang around, "
+　　" waiting to die in 5 seconds\n" );
+　　pause();
+　　return EXIT_SUCCESS;
+　　}
+　　pause命令
+　　bat脚本文件编写中 可以使操作界面暂停。如一下简单脚本：
+　　@echo off
+　　color ca
+　　echo 这是一个脚本文件这个脚本用于批量删除txt文件
+　　DEL *.txt
+　　pause >nul
+　　exit
+　　如果没有pause这一句，这个文件运行的时候界面就会一闪而过，加上之后界面就会停留。
+　　这里只是简单说明一下。
+编辑本段二、 ORACLE SQL*PLUS 命令：pause
+（一）命令格式
+　　PAU[SE] [text]
+（二）功能
+　　显示pause命令后跟着的指定的文本，并且等待用户输入任意键以继续往下执行。

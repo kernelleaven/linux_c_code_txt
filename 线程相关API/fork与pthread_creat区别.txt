@@ -1,0 +1,105 @@
+﻿简单的说，fork是用来创建进程，pthread_creat是用来创建线程。
+
+进程函数和线程函数的相关性：
+Process Primitive	            Thread Primitive				Description
+fork 							pthread_create					创建新的控制流
+exit							pthread_exit					退出已有的控制流
+waitpid							pthread_join					等待控制流并获得结束代码
+atexit							pthread_cleanup_push			注册在控制流退出时候被调用的函数
+getpid							pthread_self					获得控制流的id
+abort							pthread_cancel					请求非正常退出
+
+
+1.
+	缺省情况下，一个线程A的结束状态被保存下来直到pthread_join为该线程被调用过，也就是说即使线
+	程A已经结束，只要没有线程B调用 pthread_join(A)，A的退出状态则一直被保存。而当线程处于Detached状
+	态之时，党线程退出的时候，其资源可以立刻被回收，那么这个退出状态也丢失了。在这个状态下，无法为
+	该线程调用pthread_join函数。我们可以通过调用pthread_detach函数来使指定线程进入 Detach状态：
+	#include <pthread.h>
+	int pthread_detach(pthread_t tid);
+	通过修改调用pthread_create函数的attr参数，我们可以指定一个线程在创建之后立刻就进入Detached状态 
+
+2.
+	线程可以安排在它退出的时候，某些函数自动被调用，类似atexit()函数。需要调用如下函数：
+	#include <pthread.h>
+	void pthread_cleanup_push(void (*rtn)(void *), void *arg);
+	void pthread_cleanup_pop(int execute);
+	这两个函数维护一个函数指针的Stack，可以把函数指针和函数参数值push/pop。执行的顺序则是从栈顶到栈底，
+	也就是和push的顺序相反。在下面情况下pthread_cleanup_push所指定的thread cleanup handlers会被调用：
+	a.     调用pthread_exit
+	b.     相应cancel请求
+	c.     以非0参数调用pthread_cleanup_pop()。（如果以0调用pthread_cleanup_pop()，那么handler不会被调用
+	有一个比较怪异的要求是，由于这两个函数可能由宏的方式来实现，因此这两个函数的调用必须得是在
+	同一个Scope之中，并且配对，因为在pthread_cleanup_push的实现中可能有一个{，而 pthread_cleanup_pop可
+	能有一个}。因此，一般情况下，这两个函数是用于处理意外情况用的，举例如下：
+	void *thread_func(void *arg)
+	{
+		pthread_cleanup_push(cleanup, “handler”) 
+		// do something 
+		Pthread_cleanup_pop(0);
+		return((void *)0)；
+	}
+
+3.
+	一个Thread可以要求另外一个Thread被Cancel，通过调用pthread_cancel函数：
+	#include <pthread.h> 
+	void pthread_cancel(pthread_t tid)
+	该函数会使指定线程如同调用了pthread_exit(PTHREAD_CANCELLED)。不过，指定线程可以选择忽略或者进行自己
+	的处理，在后面会讲到。此外，该函数不会导致Block，只是发送Cancel这个请求。 
+
+4.
+	A.     exit, _Exit, _exit用于中止当前进程，而非线程
+	B.     中止线程可以有三种方式：
+		a.     在线程函数中return
+		b.     被同一进程中的另外的线程Cancel掉
+		c.     线程调用pthread_exit函数
+	C.     pthread_exit和pthread_join函数的用法：
+		a.     线程A调用pthread_join(B, &rval_ptr)，被Block，进入Detached状态（如果已经进入Detached状态，
+			则pthread_join函数返回EINVAL）。如果对B的结束代码不感兴趣，rval_ptr可以传NULL。
+		b.     线程B调用pthread_exit(rval_ptr)，退出线程B，结束代码为rval_ptr。注意rval_ptr指向的内
+			存的生命周期，不应该指向B的Stack中的数据。
+		c.     线程A恢复运行，pthread_join函数调用结束，线程B的结束代码被保存到rval_ptr参数中去。如果线
+			程B被Cancel，那么rval_ptr的值就是PTHREAD_CANCELLED。
+	两个函数原型如下：
+	#include <pthread.h>
+	 void pthread_exit(void *rval_ptr);
+	 int pthread_join(pthread_t thread, void **rval_ptr); 
+
+5.
+	A.     创建线程可以调用pthread_create函数：
+	#include <pthread.h>
+	 int pthread_create(
+		   pthread_t *restrict tidp,
+		   const pthread_attr_t *restrict attr,
+		   void *(*start_rtn)(void *), void *restrict arg);
+
+		a.     pthread_t *restrict tidp：返回最后创建出来的Thread的Thread ID
+		b.     const pthread_attr_t *restrict attr：指定线程的Attributes，后面会讲道，现在可以用NULL
+		c.     void *(*start_rtn)(void *)：指定线程函数指针，该函数返回一个void *，参数也为void*
+		d.     void *restrict arg：传入给线程函数的参数
+		e.     返回错误值。
+	B.     pthread函数在出错的时候不会设置errno，而是直接返回错误值
+	C.     在Linux 系统下面，在老的内核中，由于Thread也被看作是一种特殊，可共享地址空间和资源的Process，因
+		此在同一个Process中创建的不同 Thread具有不同的Process ID（调用getpid获得）。而在新的2.6内核之中，
+		Linux采用了NPTL(Native POSIX Thread Library)线程模型（可以参考 http://en.wikipedia.org/wiki/Native_POSIX_Thread_Library 
+		和 http://www-128.ibm.com/developerworks/linux/library/l-threading.html?ca=dgr-lnxw07LinuxThreadsAndNPTL ），
+		在该线程模型下同一进程下不同线程调用getpid返回同一个PID。
+	D.     不能对创建的新线程和当前创建者线程的运行顺序作出任何假设 
+
+6.
+	Thread由下面部分组成：
+	a.     Thread ID
+	b.     Stack
+	c.     Policy
+	d.     Signal mask
+	e.     Errno
+	f.     Thread-Specific Data 
+	
+7.
+	A.     pthread_t用于表示Thread ID，具体内容根据实现的不同而不同，有可能是一个Structure，因此不能将其看作为整数
+	B.     pthread_equal函数用于比较两个pthread_t是否相等
+		#include <pthread.h>
+		int pthread_equal(pthread_t tid1, pthread_t tid2)
+	C.   	pthread_self函数用于获得本线程的thread id
+		#include <pthread.h>
+		pthread _t pthread_self(void); 
